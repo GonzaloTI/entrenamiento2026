@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 5
+names: ['Podredumbre de cuero', 'Mancha negra (Antracnosis)', 'Moho gris', 'Oído', 'Fruta sana']
+
+roboflow:
+  workspace: hanoi-university-of-industry-xfhdu
+  project: acv-strawberry-disease
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/hanoi-university-of-industry-xfhdu/acv-strawberry-disease/dataset/1

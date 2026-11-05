@@ -14,12 +14,12 @@ if __name__ == '__main__':
 
     # Iniciar entrenamiento
     results = model.train(
-        data="C:/Users/Usuario/Documents/python/yolo/entrenamiento/2026/yolo/data.yaml",
+        data="C:/Users/Usuario/Documents/python/yolo/entrenamiento/2026/yolo3/data.yaml",
         epochs=40,  #anterior 15
         imgsz=640,
         batch=8,   #anterior 4
         device=0,
         workers=0,  # Evita que Windows cree subprocesos duplicados
         cache=False,     # <- Evita que YOLO llene la RAM con fotos viejas
-        name="yolo_custom_train_basura2026"
+        name="yolo_custom_enfermedades_fragaria"
     )

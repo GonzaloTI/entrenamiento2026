@@ -3,13 +3,13 @@ from ultralytics import YOLO
 import cv2
 
 # Leer nuestro modelo
-model = YOLO("best.pt")
+model = YOLO("best_fragaria2.pt")
 
 # --- SELECCIÓN DE CÁMARA ---
 # 0 -> Cámara integrada de la laptop
 # 1 -> Primera cámara USB conectada
 # 2 -> Segunda cámara USB (si aplica)
-indice_camara = 1 
+indice_camara = 0 
 
 # Realizar VideoCaptura
 cap = cv2.VideoCapture(indice_camara)
