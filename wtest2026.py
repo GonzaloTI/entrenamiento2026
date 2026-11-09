@@ -10,8 +10,8 @@ if __name__ == '__main__':
         print("Gráfica usada:", torch.cuda.get_device_name(0))
 
     # Cargar el modelo base
-    model = YOLO("yolo11n.pt")
-
+    #model = YOLO("yolo11n.pt")
+    model = YOLO("yolov5nu.pt")
     # Iniciar entrenamiento
     results = model.train(
         data="C:/Users/Usuario/Documents/python/yolo/entrenamiento/2026/yolo3/data.yaml",
