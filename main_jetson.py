@@ -47,6 +47,41 @@ def obtener_pipeline_csi(sensor_id=0, width=1280, height=720, fps=30, flip=0):
         f"video/x-raw, format=(string)BGR ! appsink drop=true"
     )
 
+def nms_numpy(boxes, scores, iou_threshold=0.45):
+    """Supresión de No Máximos (NMS) en NumPy puro sin depender de cv2.dnn."""
+    if len(boxes) == 0:
+        return []
+
+    x1 = boxes[:, 0]
+    y1 = boxes[:, 1]
+    x2 = boxes[:, 2]
+    y2 = boxes[:, 3]
+
+    areas = (x2 - x1) * (y2 - y1)
+    order = scores.argsort()[::-1]
+
+    keep = []
+    while order.size > 0:
+        i = order[0]
+        keep.append(i)
+
+        xx1 = np.maximum(x1[i], x1[order[1:]])
+        yy1 = np.maximum(y1[i], y1[order[1:]])
+        xx2 = np.minimum(x2[i], x2[order[1:]])
+        yy2 = np.minimum(y2[i], y2[order[1:]])
+
+        w = np.maximum(0.0, xx2 - xx1)
+        h = np.maximum(0.0, yy2 - yy1)
+        inter = w * h
+
+        union = areas[i] + areas[order[1:]] - inter
+        iou = inter / np.maximum(union, 1e-6)
+
+        inds = np.where(iou <= iou_threshold)[0]
+        order = order[inds + 1]
+
+    return keep
+
 # ==============================================================================
 # DIBUJO DE DETECCIONES DE ALTA VISIBILIDAD
 # ==============================================================================
@@ -205,26 +240,26 @@ class TensorRTInference:
         x_scale = orig_w / float(self.imgsz)
         y_scale = orig_h / float(self.imgsz)
 
-        boxes_xywh = []
-        for b in boxes:
-            cx, cy, bw, bh = b
-            x1 = int((cx - bw / 2.0) * x_scale)
-            y1 = int((cy - bh / 2.0) * y_scale)
-            w = int(bw * x_scale)
-            h = int(bh * y_scale)
-            boxes_xywh.append([x1, y1, w, h])
+        cx = boxes[:, 0] * x_scale
+        cy = boxes[:, 1] * y_scale
+        bw = boxes[:, 2] * x_scale
+        bh = boxes[:, 3] * y_scale
 
-        indices = cv2.dnn.NMSBoxes(boxes_xywh, confidences.tolist(), conf_thres, iou_thres)
+        x1 = np.clip(cx - bw / 2.0, 0, orig_w).astype(np.float32)
+        y1 = np.clip(cy - bh / 2.0, 0, orig_h).astype(np.float32)
+        x2 = np.clip(cx + bw / 2.0, 0, orig_w).astype(np.float32)
+        y2 = np.clip(cy + bh / 2.0, 0, orig_h).astype(np.float32)
+
+        boxes_xyxy = np.column_stack([x1, y1, x2, y2])
+        indices = nms_numpy(boxes_xyxy, confidences, iou_thres)
 
         detecciones = []
-        if len(indices) > 0:
-            for idx in np.array(indices).flatten():
-                bx, by, bw, bh = boxes_xywh[idx]
-                detecciones.append({
-                    'box': (max(0, bx), max(0, by), min(orig_w, bx + bw), min(orig_h, by + bh)),
-                    'conf': float(confidences[idx]),
-                    'class_id': int(class_ids[idx])
-                })
+        for idx in indices:
+            detecciones.append({
+                'box': (int(x1[idx]), int(y1[idx]), int(x2[idx]), int(y2[idx])),
+                'conf': float(confidences[idx]),
+                'class_id': int(class_ids[idx])
+            })
         return detecciones
 
     def __del__(self):
